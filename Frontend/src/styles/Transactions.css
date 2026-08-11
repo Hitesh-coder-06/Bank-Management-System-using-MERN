@@ -1,0 +1,49 @@
+.balance-card{
+    width: 90%;
+    max-width: 1100px;
+    margin: auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    overflow-x: auto;
+}
+
+.transaction-table{
+    width:100%;
+    min-width:900px;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+.transaction-table th{
+    background:#2563eb;
+    color:white;
+    padding:14px;
+    text-align:center;
+    font-size:16px;
+}
+
+.transaction-table td{
+    border:1px solid #ddd;
+    padding:12px;
+    text-align:center;
+    font-size:15px;
+    word-break:break-all;
+}
+
+.transaction-table tr:nth-child(even){
+    background:#f8f9fa;
+}
+
+.transaction-table tr:hover{
+    background:#eaf2ff;
+}
+
+.transaction-table th:first-child{
+    border-top-left-radius:8px;
+}
+
+.transaction-table th:last-child{
+    border-top-right-radius:8px;
+}

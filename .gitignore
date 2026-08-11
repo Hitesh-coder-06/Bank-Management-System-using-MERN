@@ -1,0 +1,20 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Build files
+dist/
+
+# Uploaded files
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
