@@ -20,7 +20,7 @@ const authUrl = oauth2Client.generateAuthUrl({
 });
 
 console.log("\n========================================");
-console.log("Open this URL in your browser:\n");
+
 console.log(authUrl);
 console.log("========================================\n");
 
