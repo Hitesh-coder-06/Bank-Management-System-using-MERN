@@ -1,7 +1,13 @@
 //here our all third party service code is present
 const nodemailer = require("nodemailer");
 
-// transporter == used to connect to Gmail SMTP
+//After deployment google auth service is not working mean render provide backend gmail service paid
+//so use resender
+
+const{Resend}=require("resend")
+
+
+// transporter == used to connect to Gmail SMTP (GMAIL-SMTP)
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -13,14 +19,9 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// VERIFY
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("Transporter verification failed:", error);
-    } else {
-        console.log("Transporter verified successfully");
-    }
-});
+const resend=new Resend(process.env.RESEND_API_KEY)
+
+
 
 // Generic Email Sender
 async function sendEmail({ to, subject, text, html }) {
@@ -38,9 +39,44 @@ async function sendEmail({ to, subject, text, html }) {
 
         return info;
     } catch (error) {
-        console.error("Error sending email:", error);
-        throw error;
+        console.log("Gmail email Failed")
+        console.error("trying Resend fallback");
+
+        //if gmail failed  (resend )
+       try {
+        const { data, error } = await resend.emails.send({
+
+                from: "Bank Management System <onboarding@resend.dev>",
+
+                to: [to],
+
+                subject,
+
+                text,
+
+                html,
+
+            });
+            if(error){
+                console.log("Resend email failed",error);
+                throw error;
+            }
+            console.log("Email send successfully using Resend");
+            console.log("Email_Id:" ,data.id);
+            return data;
+
+
+       } catch (resendError) {
+        console.log("Both Gmail and Resend email failed");
+        console.log("Gmail error",gmailError.message);
+        console.log("Resend Error:",resendError.message);
+        throw resendError;
+
+
+        
+       }
     }
+
 }
 
 // Registration Email
