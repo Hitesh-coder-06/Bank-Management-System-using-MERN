@@ -4,7 +4,10 @@ const app=express();    //server config
 
 const cors=require("cors")
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin:[
+        "http://localhost:5173",
+        "https://bank-management-system-using-mern-1.onrender.com"
+    ],
     credentials: true
 }));
 
