@@ -1,15 +1,15 @@
-//here our all third party service code is present
+//google service SMTP is use when local machine
+//resend mail is use for deployment
+
 const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-//After deployment google auth service is not working mean render provide backend gmail service paid
-//so use resender
-
-const{Resend}=require("resend")
+// GMAIL TRANSPORTER
 
 
-// transporter == used to connect to Gmail SMTP (GMAIL-SMTP)
 const transporter = nodemailer.createTransport({
     service: "gmail",
+
     auth: {
         type: "OAuth2",
         user: process.env.EMAIL_USER,
@@ -17,34 +17,86 @@ const transporter = nodemailer.createTransport({
         clientSecret: process.env.CLIENT_SECRET,
         refreshToken: process.env.REFRESH_TOKEN,
     },
+
+    // If Gmail connection hangs, fail and use Resend
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
 });
 
-const resend=new Resend(process.env.RESEND_API_KEY)
 
 
+// RESEND
 
-// Generic Email Sender
+
+// Create Resend only when API key exists.
+// This is important for GitHub/offline users.
+const resendApiKey = process.env.RESEND_API_KEY;
+
+const resend = resendApiKey
+    ? new Resend(resendApiKey)
+    : null;
+
+console.log(
+    "Resend API Key:",
+    resend ? "Loaded" : "Missing"
+);
+
+
+// GENERIC EMAIL SENDER
+
+
 async function sendEmail({ to, subject, text, html }) {
+
+    
+    // FIRST TRY: GMAIL
+    
+
     try {
+
         const info = await transporter.sendMail({
+
             from: `"BankManagement" <${process.env.EMAIL_USER}>`,
+
             to,
+
             subject,
+
             text,
+
             html,
+
         });
 
-        console.log("Email sent successfully");
+        console.log("Email sent successfully using Gmail");
         console.log("Message ID:", info.messageId);
 
         return info;
-    } catch (gmailError) {
-        console.log("Gmail email Failed")
-        console.error("trying Resend fallback");
 
-        //if gmail failed  (resend )
-       try {
-        const { data, error } = await resend.emails.send({
+    } catch (gmailError) {
+
+        console.log("Gmail email failed.");
+        console.log("Gmail Error:", gmailError.message);
+
+        
+        // SECOND TRY: RESEND
+    
+
+        if (!resend) {
+
+            console.log(
+                "Resend is not configured. No RESEND_API_KEY found."
+            );
+
+            // Gmail failed and Resend is not available
+            throw gmailError;
+        }
+
+        try {
+
+            console.log("Trying Resend fallback...");
+
+            const { data, error } = await resend.emails.send({
 
                 from: "Bank Management System <onboarding@resend.dev>",
 
@@ -57,30 +109,43 @@ async function sendEmail({ to, subject, text, html }) {
                 html,
 
             });
-            if(error){
-                console.log("Resend email failed",error);
+
+            if (error) {
+
+                console.log("Resend email failed:", error);
+
                 throw error;
             }
-            console.log("Email send successfully using Resend");
-            console.log("Email_Id:" ,data.id);
+
+            console.log("Email sent successfully using Resend");
+            console.log("Email ID:", data.id);
+
             return data;
 
+        } catch (resendError) {
 
-       } catch (resendError) {
-        console.log("Both Gmail and Resend email failed");
-        console.log("Gmail error",gmailError.message);
-        console.log("Resend Error:",resendError.message);
-        throw resendError;
+            console.log("Both Gmail and Resend email failed.");
 
+            console.log(
+                "Gmail Error:",
+                gmailError.message
+            );
 
-        
-       }
+            console.log(
+                "Resend Error:",
+                resendError.message || resendError
+            );
+
+            // Return the final failure
+            throw resendError;
+        }
     }
-
 }
 
-// Registration Email
-// Registration Email
+
+// REGISTRATION EMAIL
+
+
 async function sendRegistrationEmail(userEmail, name) {
 
     const subject = "Registration Successful";
@@ -106,8 +171,15 @@ Bank Management Team
 }
 
 
-// Transaction Success Email
-async function sendTransactionEmail(userEmail, name, amount, toAccount) {
+
+// TRANSACTION SUCCESS EMAIL
+
+async function sendTransactionEmail(
+    userEmail,
+    name,
+    amount,
+    toAccount
+) {
 
     const subject = "Transaction Successful";
 
@@ -133,8 +205,15 @@ Bank Management Team
 }
 
 
-// Transaction Failure Email
-async function sendTransactionFailureEmail(userEmail, name, amount, toAccount) {
+// TRANSACTION FAILURE EMAIL
+
+
+async function sendTransactionFailureEmail(
+    userEmail,
+    name,
+    amount,
+    toAccount
+) {
 
     const subject = "Transaction Failed";
 
@@ -158,6 +237,10 @@ Bank Management Team
         text
     });
 }
+
+
+
+// EXPORT
 
 
 module.exports = {
