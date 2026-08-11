@@ -38,7 +38,7 @@ async function sendEmail({ to, subject, text, html }) {
         console.log("Message ID:", info.messageId);
 
         return info;
-    } catch (error) {
+    } catch (gmailError) {
         console.log("Gmail email Failed")
         console.error("trying Resend fallback");
 
